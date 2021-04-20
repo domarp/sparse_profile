@@ -7,34 +7,22 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import roc_auc_score
 
-def sparse_profile(df, target_column, verbose = False):
-    """
-    Function to profile data
-
-    Parameters
-    ---------
-    df : pandas dataframe, the data to be profiled (includes the target column)
-    target_column : string, name of the target column in df
-    verbose : boolean, print all output (default False)
-
-    Returns
-    -------
-    ???
-    """
-    def compute_gain(class_col, pred_col, threshold):
+class sparse_profile:
+    def compute_gain(self, pred_column, threshold):
         """
         Function to compute gain
 
         Parameters
         ----------
-        class_col: pd.Series / np.array, target column
-        pred_col: pd.Series / np.array, prediction column
-        threshold: float, cut-off value for gain calculation
+        ???
 
         Returns
         -------
         information gain
         """
+
+        class_col = self.y.values
+        pred_col = self.x[pred_column]
 
         prior = np.mean(class_col)
         post_true = class_col[pred_col > threshold].mean()
@@ -56,50 +44,66 @@ def sparse_profile(df, target_column, verbose = False):
 
         return gain
 
-    deciles = [i/10 for i in range(1,10)]
-    no_target_df = df.drop([target_column], axis = 1)
+    def sparse_profile_report(self):
+        """
+        Function to profile data
 
-    # report_sparsity to compute percentage of zeros
-    report_sparsity = pd.DataFrame(1-no_target_df.replace(0, np.nan).count(axis = 0)/no_target_df.shape[0])
-    if verbose:
-        print("\nZeros (%)\n", report_sparsity)
+        Parameters
+        ---------
+        ???
 
-    # distinct non zeros
-    report_distinct = pd.DataFrame(no_target_df.apply(lambda x : len(np.unique(x)), axis=0))
-    if verbose:
-        print("\nDistinct Values (%)\n", report_distinct)
+        Returns
+        -------
+        ???
+        """
+        
+        deciles = [i/10 for i in range(1,10)]
+        no_target_df = self.x.copy()
 
-    # overall stats
-    report_overall = pd.DataFrame(no_target_df.describe(percentiles=deciles))
-    if verbose:
-        print("\nOverall Stats\n", report_overall)
+        # report_sparsity to compute percentage of zeros
+        self.report_sparsity = pd.DataFrame(1-no_target_df.replace(0, np.nan).count(axis = 0)/no_target_df.shape[0])
+        if self.verbose:
+            print("\nZeros (%)\n", self.report_sparsity)
 
-    # Non Zero stats
-    report_non_zero = pd.DataFrame(no_target_df.replace(0, np.nan).describe(percentiles=deciles))
-    if verbose:
-        print("\nNon zero stats\n", report_non_zero)
+        # distinct non zeros
+        self.report_distinct = pd.DataFrame(no_target_df.apply(lambda x : len(np.unique(x)), axis=0))
+        if self.verbose:
+            print("\nDistinct Values (%)\n", self.report_distinct)
 
-    # Compute gain
-    indx = [str(int(i*100)) + "%" for i in deciles]
-    gain_df = pd.DataFrame(index = indx, columns  = report_overall.columns)
-    auc_df = pd.DataFrame(columns  = report_overall.columns)
+        # overall stats
+        self.report_overall = pd.DataFrame(no_target_df.describe(percentiles=deciles))
+        if self.verbose:
+            print("\nOverall Stats\n", self.report_overall)
 
-    for cols in report_overall.columns:
-        temp_col = []
-        for decile in indx:
-            temp_col.append(compute_gain(df[target_column], df[cols], report_overall.loc[decile, cols]))
-        gain_df[cols] = temp_col
-        auc_df[cols] = [roc_auc_score(df[target_column], df[cols])]
-    
-    if verbose:
-        print("\nGain DF\n", gain_df)
-    
-    print("\n Top features:\n")
-    top_gain = gain_df.max().sort_values(ascending = False)
-    print(top_gain)
-    
-    return (report_sparsity, report_distinct, report_overall, report_non_zero, gain_df, auc_df)
+        # Non Zero stats
+        self.report_non_zero = pd.DataFrame(no_target_df.replace(0, np.nan).describe(percentiles=deciles))
+        if self.verbose:
+            print("\nNon zero stats\n", self.report_non_zero)
 
+        # Compute gain
+        indx = [str(int(i*100)) + "%" for i in deciles]
+        self.gain_df = pd.DataFrame(index = indx, columns  = self.report_overall.columns)
+        self.auc_df = pd.DataFrame(columns  = self.report_overall.columns)
+
+        for cols in self.report_overall.columns:
+            temp_col = []
+            for decile in indx:
+                temp_col.append(self.compute_gain(cols, self.report_overall.loc[decile, cols]))
+            self.gain_df[cols] = temp_col
+            self.auc_df[cols] = [roc_auc_score(self.y, self.x[cols])]
+        
+        if self.verbose:
+            print("\nGain DF\n", self.gain_df)
+        
+        print("\n Top features:\n")
+        self.top_gain = self.gain_df.max().sort_values(ascending = False)
+        print(self.top_gain)
+
+    def __init__(self, df, target_column, verbose=False):
+        self.y = df[target_column]
+        self.x = df.drop([target_column], axis=1)
+        self.verbose = False
+        self.sparse_profile_report()
 
 if __name__ == "__main__":
     df = pd.DataFrame({
@@ -107,7 +111,8 @@ if __name__ == "__main__":
         'col_1' :  [1, 0, 0, 0, 0, 0, 0, 0, 0, 9],
         'col_2' :  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     })
-    sparse_profile(df, 'target', False)
+    sProfile = sparse_profile(df, 'target')
+    print(sProfile.top_gain)
 
 
     
