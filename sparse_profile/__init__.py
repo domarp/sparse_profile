@@ -1,1 +1,1 @@
-from .sparse_profile import *
+from .sparse_profile import sparse_profile
