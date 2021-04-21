@@ -5,6 +5,10 @@ Curently takes only numeric values
 Sample usage
 ------------
 ```python
+import pandas as pd
+import numpy as np
+from sparse_profile import sparse_profile
+
 df = pd.DataFrame({
         'target' : [1, 1, 1, 1, 0, 0 ,0 ,0, 1, 0],
         'col_1' :  [1, 0, 0, 0, 0, 0, 0, 0, 0, 9],
