@@ -1,7 +1,23 @@
 """
+@uthor : pramod.balakrishnan
+
 Module to perform EDA tasks for a classification problem
 with sparse data
-@uthor : pramod.balakrishnan
+Curently takes only numeric values
+
+Sample usage
+------------
+df = pd.DataFrame({
+        'target' : [1, 1, 1, 1, 0, 0 ,0 ,0, 1, 0],
+        'col_1' :  [1, 0, 0, 0, 0, 0, 0, 0, 0, 9],
+        'col_2' :  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    })
+    sProfile = sparse_profile(df, 'target')
+    print(sProfile.top_gain)
+
+Various sparse_profile reports can be accessed as attributes of the 
+sparse_profile class object
+
 """
 import pandas as pd
 import numpy as np
@@ -14,11 +30,13 @@ class sparse_profile:
 
         Parameters
         ----------
-        ???
+        self:        sparse_profile class object
+        pred_column: string, column name of the column being evaluated / gain being computed
+        threshold:   float, threshold value at which gain is to be computed
 
         Returns
         -------
-        information gain
+        information gain of pred_column at threshold for the target column
         """
 
         class_col = self.y.values
@@ -28,7 +46,6 @@ class sparse_profile:
         post_true = class_col[pred_col > threshold].mean()
         post_false = class_col[pred_col <= threshold].mean()
         weights = [(pred_col > threshold).sum(),(pred_col <= threshold).sum()]
-        # print(weights)
 
         prior_entropy = -(prior*np.log(prior) + (1-prior)*np.log((1-prior)))
 
@@ -40,21 +57,29 @@ class sparse_profile:
         post_entropy = -(weights[0]*post_true_entropy + weights[1]*post_false_entropy)/(weights[0]+weights[1])
 
         gain = -(post_entropy - prior_entropy)
-        # print(threshold, prior_entropy, post_true_entropy,post_false_entropy, post_entropy, gain)
 
         return gain
 
     def sparse_profile_report(self):
         """
-        Function to profile data
+        Function to create sparse profile report
 
         Parameters
         ---------
-        ???
+        self: sparse_profile class object
 
         Returns
         -------
-        ???
+        Sparse profile report in terms of corresponding class object attributes
+        report_sparsity:    pandas dataframe, Percentage of zeros in each column
+        report_distinct:    pandas dataframe, Count of distinct non zero values in each column
+        report_overall:     pandas dataframe, Overall summary of each column
+                            (similar to pandas describe())
+        report_non_zero:    pandas dataframe, Summary of each column after removing zeros
+        gain_df:            pandas dataframe, Relative information gain at decile cutoffs 
+                            for each column wrt target column
+        auc_df:             pandas dataframe, AUC of each column wrt target column
+        top_gain:           pandas dataframe, Columns sorted by maximum gain obtained from gain_df
         """
         
         deciles = [i/10 for i in range(1,10)]
@@ -95,11 +120,26 @@ class sparse_profile:
         if self.verbose:
             print("\nGain DF\n", self.gain_df)
         
-        print("\n Top features:\n")
+        # print("\n Top features:\n")
         self.top_gain = self.gain_df.max().sort_values(ascending = False)
-        print(self.top_gain)
+        # print(self.top_gain)
 
     def __init__(self, df, target_column, verbose=False):
+        """
+        Initialization of class object
+
+        Parameters
+        ----------
+        df:             pandas dataframe, contains target and predictor columns (all numeric)
+        target_column:  string, target column name
+        verbose:        boolean, to print completion status
+
+        Returns
+        -------
+        sparse_profile class object initialized to values passed to the initialization function
+        and sparse_profile reports computed
+        """
+
         self.y = df[target_column]
         self.x = df.drop([target_column], axis=1)
         self.verbose = False
