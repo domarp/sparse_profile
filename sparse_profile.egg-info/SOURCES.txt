@@ -1,0 +1,10 @@
+LICENSE
+README.md
+setup.py
+sparse_profile/__init__.py
+sparse_profile/sparse_profile.py
+sparse_profile.egg-info/PKG-INFO
+sparse_profile.egg-info/SOURCES.txt
+sparse_profile.egg-info/dependency_links.txt
+sparse_profile.egg-info/requires.txt
+sparse_profile.egg-info/top_level.txt
