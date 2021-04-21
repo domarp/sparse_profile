@@ -8,4 +8,5 @@ df = pd.DataFrame({
         'col_2' :  [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     })
 tt = sparse_profile(df, 'target', False)
-print(tt.top_gain)
+print(tt.report_sparsity)
+
